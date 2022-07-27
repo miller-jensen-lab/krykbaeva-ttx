@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
 import scanpy as sc
-import matplotlib.pyplot as plt
 import matplotlib
-from matplotlib.colors import rgb2hex
 import seaborn as sns
 
 from pipeline_functions import training_data_select
