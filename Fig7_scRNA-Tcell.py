@@ -1,12 +1,9 @@
 import numpy as np
 import pandas as pd
 import scanpy as sc
-import matplotlib.pyplot as plt
 import matplotlib
 import scirpy as ir
 import anndata
-from matplotlib.colors import rgb2hex
-import seaborn as sns
 
 # figure params
 sc.set_figure_params(figsize=(5, 5), fontsize=15)
