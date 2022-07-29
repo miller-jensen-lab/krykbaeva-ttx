@@ -39,9 +39,9 @@ mac_dc = remove_recompute(mac_dc)
 sc.pl.umap(mac_dc, legend_loc='lower right', color='Sample', s=40, palette=my_pal0)
 
 # VIZ myeloid cells by cell type
-my_pal1 = {'CD4+ T cell': cmap(0.01),
-           'CD8+ T cell': cmap(0.5),
-           'Treg': cmap(0.99)}
+my_pal1 = {'DC': cmap(0.01),
+           'Macrophage': cmap(0.5),
+           'Neutrophil': cmap(0.99)}
 sc.pl.umap(mac_dc, legend_loc='lower right', color='nn_80', s=40, palette=my_pal1)
 # using viridis instead of celltype_dict to maximally distinguish colors
 
