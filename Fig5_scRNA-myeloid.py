@@ -27,8 +27,8 @@ mac_dc = new_bos[mdc_ind, :]
 
 
 def remove_recompute(adata):
-    del adata.obsm['X_umap'], adata.obsm['X_diffmap'], adata.obsm['X_pca'], adata.obsp, adata.uns
-    sc.tl.pca(adata, svd_solver='auto')
+    del adata.obsm['X_umap'], adata.obsm['X_pca'], adata.obsp, adata.uns # ,adata.obsm['X_diffmap']
+    sc.tl.pca(adata, svd_solver='lobpcg')
     sc.pp.neighbors(adata)  # using with default parameters
     sc.tl.umap(adata)
     return adata
@@ -44,6 +44,12 @@ my_pal1 = {'DC': cmap(0.01),
            'Neutrophil': cmap(0.99)}
 sc.pl.umap(mac_dc, legend_loc='lower right', color='nn_80', s=40, palette=my_pal1)
 # using viridis instead of celltype_dict to maximally distinguish colors
+
+sc.pl.umap(mac_dc, legend_loc='lower right', color=['Cd40', 'Csf1r'], s=40, cmap='Reds', use_raw=False)
+
+# create CD40ag monotherapy response signature
+cd40_genes = pd.read_excel('/Users/katebridges/Downloads/20220915_mac_CD40_wilc.xlsx', header=0)
+sc.tl.score_genes(mac_dc, cd40_genes['names'][:25].values, score_name='UCG_CD40ag_score', use_raw=True)
 
 # DIFF EXPR analysis
 sample_celltype = []
@@ -71,9 +77,11 @@ writer.save()  # for export to gProfiler for GSEA
 
 # INDIV gene plots with bootstrapped error bars
 matplotlib.rcParams.update({'font.size': 15})
+sns.set_style("whitegrid", {'axes.grid' : False})
+sns.set_style("ticks")
 
 bar_ind = ['DC Ctrl', 'DC TTx', 'Mac Ctrl', 'Mac TTx']
-cc_geneset = ['Il12b', 'Il6', 'Tnf', 'Ccl5']  # genes of interest
+cc_geneset = ['Il12b', 'Il6', 'Tnf', 'Ccl5', 'Cd40', 'Csf1r']  # genes of interest
 
 for gene_name in cc_geneset:
     dat = np.array(mac_dc[:, gene_name].X.todense()).flatten()

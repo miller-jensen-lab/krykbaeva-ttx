@@ -25,7 +25,7 @@ pc = PCA(data.iloc[:, 1:].T, missing='fill-em', ncomp=3)  # missing='fill-em', n
 
 # VISUALIZATION of imputed data in clustered heatmap
 sns.clustermap(pc.transformed_data, cmap='seismic', center=0, xticklabels=data['ProteinName'],
-               yticklabels=data.columns[1:], linewidths=0.1, linecolor='black', rasterized=False)
+               yticklabels=data.columns[1:], linewidths=0.1, linecolor='black', rasterized=False, z_score=1)
 plt.xticks(rotation=75)
 plt.show()
 
@@ -75,6 +75,66 @@ plt.barh(np.arange(20), np.sort(-pc.coeff.iloc[0, :])[(45-20):], color='k')
 plt.yticks(np.arange(20), data['ProteinName'][np.argsort(pc.coeff.iloc[0, :]).values[::-1]].values[(45-20):])
 plt.xlabel('Coefficient along PC1')
 plt.show()
+
+# for PC3
+matplotlib.rcParams.update({'font.size': 18})
+sns.set_style("ticks")
+fig, ax = plt.subplots(figsize=(6.5, 6))
+plt.barh(np.arange(20), np.sort(-pc.coeff.iloc[2, :])[(45-20):], color='k')
+plt.yticks(np.arange(20), data['ProteinName'][np.argsort(pc.coeff.iloc[2, :]).values[::-1]].values[(45-20):])
+plt.xlabel('Coefficient along PC3')
+plt.show()
+
+# FOR CD40 INCLUSIVE SAMPLES ONLY (Panel E)
+new_df = data.iloc[:, 1:].T
+cd40_samples = new_df[new_df.index.str.contains('CD40') | new_df.index.str.contains('TTx')]
+cd40_samples.columns = data['ProteinName']
+
+ctrl_means = new_df[new_df.index.str.contains('Tumor')].mean(axis=0)
+csf1r_means = new_df[new_df.index.str.contains('CSF1R')].iloc[:6, :].mean(axis=0)
+cd40_means = new_df[new_df.index.str.contains('CD40')].iloc[:6, :].mean(axis=0)
+ttx_means = new_df.iloc[-6:, :].mean(axis=0)
+
+logfc = pd.DataFrame([])
+logfc['CSF1R'] = np.log2(csf1r_means/ctrl_means)
+logfc['CD40'] = np.log2(cd40_means/ctrl_means)
+logfc['CD40+CSF1R'] = np.log2(ttx_means/ctrl_means)
+logfc.index = data['ProteinName']
+
+# drop rows with nan
+logfc = logfc.dropna(axis=0)
+
+sns_plot = sns.clustermap(logfc, cmap='seismic', center=0, linewidths=0.1, linecolor='black', rasterized=False,
+                          yticklabels=logfc.index, figsize=(6, 14))
+sns_plot.figure.savefig("log2fc_cd40_csf1r.png")
+
+# cytokines/chemokines only
+main = ['TNFa', 'IFNg', 'CXCL9', 'IL-12p40', 'IL-6', 'CCL5', 'CXCL10']
+supp_gf = ['MCP-1', 'CCL3', 'CCL4', 'CXCL1', 'CCL17', 'CCL22', 'CXCL2', 'CX3CL1', 'G-CSF', 'LIF', 'M-CSF', 'VEGF']
+
+sns_plot = sns.clustermap(logfc.loc[supp_gf], cmap='seismic', center=0, linewidths=0.1, linecolor='black', rasterized=False,
+                          yticklabels=supp_gf, figsize=(8, 5), row_cluster=False, col_cluster=False)
+
+# # remove CCL21
+# cd40_samples = cd40_samples.drop(columns='CCL21')
+#
+# pc_cd40 = PCA(cd40_samples, missing='fill-em', ncomp=3)
+# cd40_cond = [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4]
+#
+# fig, ax = plt.subplots()
+# for n in np.unique(cd40_cond):
+#     i = np.where(cd40_cond == n)[0]
+#     ax.scatter(pc_cd40.factors['comp_0'][i], pc_cd40.factors['comp_1'][i], label=n)
+# ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 8})
+# plt.xlabel('PC1 ({}%)'.format(np.round((pc_cd40.eigenvals[0]/pc.eigenvals.sum())*100, 1)))
+# plt.ylabel('PC2 ({}%)'.format(np.round((pc_cd40.eigenvals[1]/pc.eigenvals.sum())*100, 1)))
+#
+# matplotlib.rcParams.update({'font.size': 18})
+# fig, ax = plt.subplots(figsize=(5, 8))
+# plt.bar(np.arange(44), np.sort(pc_cd40.coeff.iloc[0, :]), color='k')
+# plt.xticks(np.arange(44), cd40_samples.columns[np.argsort(pc_cd40.coeff.iloc[0, :])], rotation=90)
+# plt.ylabel('Coefficient along PC1')
+# plt.show()
 
 # FOR FIG 3:  creating similar comparison to human data (untreated tumors vs. either CD40+CSF1R or TTx)
 human_cond = np.array([])
