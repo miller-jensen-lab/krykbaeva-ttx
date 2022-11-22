@@ -144,3 +144,31 @@ sg = sns.clustermap(corr_data, yticklabels=clustermap_order, xticklabels=cluster
 plt.xticks(rotation=75)
 plt.show()
 sg.savefig('pairedcorr_limited.png')
+
+# comparing baseline to pre-treatment cohort 2
+# removing 0605 and 0302 - missing c2 24 hr sample
+data_mel = data_mel[~attr_mel['patient'].str.contains('0605')]
+data_mel = data_mel[~attr_mel['patient'].str.contains('0302')]
+
+attr_mel = attr_mel[~attr_mel['patient'].str.contains('0605')]
+attr_mel = attr_mel[~attr_mel['patient'].str.contains('0302')]
+
+baseline = data_mel[attr_mel['patient and sample'].str.contains('baseline')].iloc[:, 1:]
+c1_24 = data_mel[attr_mel['patient and sample'].str.contains('cycle 1 - 24 hr')].iloc[:, 1:]
+c2_pre = data_mel[attr_mel['patient and sample'].str.contains('pre treatment')].iloc[:, 1:]
+c2_24 = data_mel[attr_mel['patient and sample'].str.contains('cycle 2 - 24 h')].iloc[:, 1:]
+
+# plotting panel of 68 against one another (baseline vs. pre C2)
+z = np.log2(c1_24.mean(axis=0)/baseline.mean(axis=0))
+y = np.log2(c2_24.mean(axis=0)/c2_pre.mean(axis=0))
+
+z1 = np.log10(baseline.mean(axis=0))
+y1 = np.log10(c2_pre.mean(axis=0))
+
+fig, ax = plt.subplots()
+ax.scatter(z1, y1)
+ax.axline((0, 0), slope=1, c='k', linestyle='--')
+for i, txt in enumerate(baseline.columns):
+    ax.annotate(txt, (z1[i], y1[i]))
+
+# plotting log2FC (24 hr/baseline vs. 24 hr/pre C2)
