@@ -51,6 +51,15 @@ def read_in_data(filename: str):
 def plot(filename: str, prefix: str, show: bool = False):
     """
         Plot heatmap and PCA for multiplexed serum cytokine data
+
+        Run this like:
+
+        ```
+        python3 ./Fig2_serum-cytokines.py plot './tmp/Cytokines in sera in vivo - Bill Damsky_reformatted.xlsx' --prefix 'tmp/output'
+        ```
+
+        Use `--show` to show the plots interactively.
+
     """
     data = read_in_data(filename)
 
@@ -89,7 +98,7 @@ def plot(filename: str, prefix: str, show: bool = False):
             9: cmap1(0.275)}
 
     # PLOTTING PCA WITH CUSTOM MARKERS
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     for g in np.unique(cond_ind):
         i = np.where(cond_ind == g)[0]
         if g < 5:
@@ -98,9 +107,7 @@ def plot(filename: str, prefix: str, show: bool = False):
         else:
             ax.scatter(pc.factors['comp_0'][i], pc.factors['comp_2'][i], label=cond[g-5], marker=markers[0], s=24,
                     facecolors=my_pal[g], edgecolors=my_pal[g])
-        # for h in i:
-        #     ax.annotate(data.columns[h+1], (pc.factors['comp_0'][h], pc.factors['comp_2'][h]), c='black',
-        #                 fontsize=8, ha='right')
+
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 8})
     plt.xlabel('PC1 ({}%)'.format(np.round((pc.eigenvals[0]/pc.eigenvals.sum())*100, 1)))
     plt.ylabel('PC3 ({}%)'.format(np.round((pc.eigenvals[2]/pc.eigenvals.sum())*100, 1)))
@@ -112,7 +119,7 @@ def plot(filename: str, prefix: str, show: bool = False):
     # PLOTTING COEFFICIENTS ALONG PC (understanding drivers of variability in your dataset)
     # horiz barplot for top 20 coeff along PC1
     matplotlib.rcParams.update({'font.size': 18})
-    fig, ax = plt.subplots(figsize=(7, 6.5))
+    _, ax = plt.subplots(figsize=(7, 6.5))
     plt.barh(np.arange(20), np.sort(-pc.coeff.iloc[0, :])[(45-20):], color='k')
     plt.yticks(np.arange(20), data['ProteinName'][np.argsort(pc.coeff.iloc[0, :]).values[::-1]].values[(45-20):])
     plt.xlabel('Coefficient along PC1')
@@ -123,7 +130,7 @@ def plot(filename: str, prefix: str, show: bool = False):
     # for PC3
     matplotlib.rcParams.update({'font.size': 18})
     sns.set_style("ticks")
-    fig, ax = plt.subplots(figsize=(6.5, 6))
+    _, ax = plt.subplots(figsize=(6.5, 6))
     plt.barh(np.arange(20), np.sort(-pc.coeff.iloc[2, :])[(45-20):], color='k')
     plt.yticks(np.arange(20), data['ProteinName'][np.argsort(pc.coeff.iloc[2, :]).values[::-1]].values[(45-20):])
     plt.xlabel('Coefficient along PC3')
@@ -161,26 +168,6 @@ def plot(filename: str, prefix: str, show: bool = False):
     sns_plot = sns.clustermap(logfc.loc[supp_gf], cmap='seismic', center=0, linewidths=0.1, linecolor='black', rasterized=False,
                             yticklabels=supp_gf, figsize=(8, 5), row_cluster=False, col_cluster=False)
 
-    # # remove CCL21
-    # cd40_samples = cd40_samples.drop(columns='CCL21')
-    #
-    # pc_cd40 = PCA(cd40_samples, missing='fill-em', ncomp=3)
-    # cd40_cond = [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4]
-    #
-    # fig, ax = plt.subplots()
-    # for n in np.unique(cd40_cond):
-    #     i = np.where(cd40_cond == n)[0]
-    #     ax.scatter(pc_cd40.factors['comp_0'][i], pc_cd40.factors['comp_1'][i], label=n)
-    # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 8})
-    # plt.xlabel('PC1 ({}%)'.format(np.round((pc_cd40.eigenvals[0]/pc.eigenvals.sum())*100, 1)))
-    # plt.ylabel('PC2 ({}%)'.format(np.round((pc_cd40.eigenvals[1]/pc.eigenvals.sum())*100, 1)))
-    #
-    # matplotlib.rcParams.update({'font.size': 18})
-    # fig, ax = plt.subplots(figsize=(5, 8))
-    # plt.bar(np.arange(44), np.sort(pc_cd40.coeff.iloc[0, :]), color='k')
-    # plt.xticks(np.arange(44), cd40_samples.columns[np.argsort(pc_cd40.coeff.iloc[0, :])], rotation=90)
-    # plt.ylabel('Coefficient along PC1')
-    # plt.show()
 
     # FOR FIG 3:  creating similar comparison to human data (untreated tumors vs. either CD40+CSF1R or TTx)
     human_cond = np.array([])
@@ -209,7 +196,7 @@ def plot(filename: str, prefix: str, show: bool = False):
     sec_pal = {0: 'xkcd:cerulean',
             1: 'xkcd:light red'}
 
-    fig, ax = plt.subplots(figsize=(4, 18))
+    _, ax = plt.subplots(figsize=(4, 18))
     sns.boxplot(x="Panel", y="Concentration [ln(pg/mL)]", hue="Treatment",
                 data=human_plot_df, fliersize=0, width=0.8, palette=sec_pal)
     sp = sns.stripplot(x="Panel", y="Concentration [ln(pg/mL)]", hue="Treatment",
