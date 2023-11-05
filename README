@@ -1,0 +1,20 @@
+# Titlte
+
+
+## Python dependencies
+
+The dependencies are in `requirements.txt`. The top-level deps
+are as follows:
+
+```
+numpy
+pandas
+openpyxl
+statsmodels
+matplotlib
+seaborn
+scipy
+scanpy
+tensorflow
+click
+```
