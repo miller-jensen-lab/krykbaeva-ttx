@@ -131,7 +131,9 @@ def classify_cells(infile: str, outfile: str):
 
 @cli.command()
 @click.argument('infile', type=click.Path(exists=True))
-def visualize_cells(infile: str):
+@click.argument('output_prefix', default='output')
+@click.option('--show/--no-show', default=False)
+def visualize_cells(infile: str, output_prefix: str, show: bool = False):
     """ Visualize cell types
 
         Run like:
@@ -141,6 +143,7 @@ def visualize_cells(infile: str):
             /Users/katebridges/PycharmProjects/test/ttx_annotated20210211.h5ad
         ```
     """
+    figs = {}
     new_bos = sc.read(infile)
     cell_type_labels, _ = get_cell_types(len(markers))
     cell_type_labels.append('Poorly classified')
@@ -151,7 +154,13 @@ def visualize_cells(infile: str):
         cell_type_labels[p]: cmap_[p]
         for p in range(len(cell_type_labels))
     }
-    sc.pl.umap(new_bos, color='nn_80', palette=celltype_dict)
+    figs['umap'] = sc.pl.umap(
+        new_bos,
+        color='nn_80',
+        palette=celltype_dict,
+        show=show,
+        return_fig=True,
+    )
 
     # DOTPLOT to demonstrate marker expr
     marker_genes_dict = {'Immune cell': ['Ptprc'],
@@ -174,19 +183,52 @@ def visualize_cells(infile: str):
     new_bos.obs['nn_ordered'] = pd.Categorical(new_bos.obs['nn_80'], categories=ordered_types, ordered=True)
 
     matplotlib.rcParams.update({'font.size': 15})
-    sc.pl.dotplot(new_bos, marker_genes_dict, 'nn_ordered', dendrogram=False, log=True, var_group_rotation=70)
 
+
+    figs['dotplot'] = sc.pl.dotplot(
+        new_bos,
+        marker_genes_dict,
+        'nn_ordered',
+        dendrogram=False,
+        log=True,
+        var_group_rotation=70,
+        show=show,
+        return_fig=True,
+    )
+    
     # VIZ expression of cognate receptors for therapy across assigned cell types
     ttx_receptors = ['Pdcd1', 'Csf1r', 'Cd40']
-    sc.pl.stacked_violin(new_bos, ttx_receptors, groupby='nn_80', dendrogram=True, fig_size=(15, 15), swap_axes=True,
-                        cmap='Reds', vmin=-1, vmax=2)
+    figs['stacked-violin'] = sc.pl.stacked_violin(
+        new_bos,
+        ttx_receptors,
+        groupby='nn_80',
+        dendrogram=True,
+        fig_size=(15, 15),
+        swap_axes=True,
+        cmap='Reds',
+        vmin=-1,
+        vmax=2,
+        show=show,
+        return_fig=True,
+    )
 
     # SCORING AND VIZ by C/C activity (from serum data)
     cc_geneset = ['Csf2', 'Ccl21b', 'Cxcl2', 'Csf1', 'Cx3cl1', 'Ifng', 'Cxcl1', 'Il12b', 'Csf3', 'Il6', 'Ccl5', 'Ccl11', 'Ccl2',
                 'Ccl4', 'Il11', 'Ccl19', 'Tnf', 'Ccl22', 'Cxcl9', 'Ccl17', 'Timp1', 'Ccl20', 'Il16', 'Ccl12',
                 'Lif', 'Il10', 'Cxcl10']
     sc.tl.score_genes(new_bos, cc_geneset, score_name='CC_score', use_raw=True)
-    sc.pl.umap(new_bos, color='CC_score', cmap='seismic', vmin=-4, vmax=4)
+    figs['umap2'] = sc.pl.umap(
+        new_bos,
+        color='CC_score',
+        cmap='seismic',
+        vmin=-4,
+        vmax=4,
+        show=show,
+        return_fig=True
+    )
+
+    for key, figure in figs.items():
+        figure.savefig(f'{output_prefix}-{key}.png')
 
 
 if __name__ == '__main__':
